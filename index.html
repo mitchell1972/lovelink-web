@@ -4,7 +4,6 @@
     <title>LoveLink - Reset Password</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
-    <meta name="description" content="Reset your LoveLink password">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💕</text></svg>">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,7 +35,6 @@
             border-radius: 10px;
             font-size: 16px;
             margin-bottom: 15px;
-            transition: border-color 0.2s;
         }
         input:focus { border-color: #6C63FF; outline: none; }
         button {
@@ -49,35 +47,14 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
         }
         button:hover { background: #5a52e0; }
         button:disabled { background: #ccc; cursor: not-allowed; }
-        .message { padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; }
+        .message { padding: 15px; border-radius: 10px; margin-bottom: 15px; }
         .error { background: #ffebee; color: #c62828; }
         .success { background: #e8f5e9; color: #2e7d32; }
         .hidden { display: none; }
-        .app-link {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            color: #666;
-            font-size: 14px;
-        }
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -85,140 +62,100 @@
         <div class="logo">💕</div>
         <h1>LoveLink</h1>
         
-        <!-- Password Reset Form -->
         <div id="resetForm">
             <p class="subtitle">Enter your new password</p>
             <div id="message"></div>
-            <input type="password" id="password" placeholder="New password (min 6 characters)" minlength="6">
-            <input type="password" id="confirmPassword" placeholder="Confirm new password" onkeypress="if(event.key==='Enter')resetPassword()">
-            <button id="submitBtn" onclick="resetPassword()">
-                <span id="btnText">Update Password</span>
-                <span id="btnLoading" class="hidden"><span class="spinner"></span>Updating...</span>
-            </button>
+            <input type="password" id="password" placeholder="New password (min 6 characters)">
+            <input type="password" id="confirmPassword" placeholder="Confirm new password">
+            <button id="submitBtn">Update Password</button>
         </div>
 
-        <!-- Success State -->
         <div id="successState" class="hidden">
-            <div class="message success">
-                ✅ Password updated successfully!
-            </div>
+            <div class="message success">✅ Password updated successfully!</div>
             <p class="subtitle">You can now open the LoveLink app and log in with your new password.</p>
         </div>
 
-        <!-- Error State (invalid/expired link) -->
         <div id="errorState" class="hidden">
-            <div class="message error">
-                ❌ This password reset link is invalid or has expired.
-            </div>
+            <div class="message error">❌ This password reset link is invalid or has expired.</div>
             <p class="subtitle">Please request a new password reset from the LoveLink app.</p>
         </div>
 
-        <div class="app-link">
-            <p>💕 LoveLink - Connect with your partner</p>
-        </div>
+        <div class="footer">💕 LoveLink - Connect with your partner</div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // =====================================================
-        // IMPORTANT: Replace with your actual Supabase credentials
-        // =====================================================
-        const SUPABASE_URL = 'https://tfrhdxatjsyobmyffuzg.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmcmhkeGF0anN5b2JteWZmdXpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4OTg3MDQsImV4cCI6MjA4MTQ3NDcwNH0.jh8_0W7_Sd4K8FVJIKlrcZpgkwwysX6wIWaNp1cveI8';
-        // =====================================================
-        
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        (function() {
+            var SUPABASE_URL = 'https://tfrhdxatjsyobmyffuzg.supabase.co';
+            var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmcmhkeGF0anN5b2JteWZmdXpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4OTg3MDQsImV4cCI6MjA4MTQ3NDcwNH0.jh8_0W7_Sd4K8FVJIKlrcZpgkwwysX6wIWaNp1cveI8';
+            
+            var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            var hashParams = new URLSearchParams(window.location.hash.substring(1));
+            var error = hashParams.get('error');
+            var accessToken = hashParams.get('access_token');
+            var refreshToken = hashParams.get('refresh_token');
+            var type = hashParams.get('type');
 
-        // Check URL for errors or valid session
-        async function init() {
-            const hashParams = new URLSearchParams(window.location.hash.substring(1));
-            const error = hashParams.get('error');
-            const accessToken = hashParams.get('access_token');
-            const refreshToken = hashParams.get('refresh_token');
-            const type = hashParams.get('type');
-
-            // Check for errors in URL (expired/invalid link)
             if (error) {
                 document.getElementById('resetForm').classList.add('hidden');
                 document.getElementById('errorState').classList.remove('hidden');
                 return;
             }
 
-            // If we have an access token for recovery
             if (accessToken && type === 'recovery') {
-                try {
-                    const { error: sessionError } = await supabase.auth.setSession({
-                        access_token: accessToken,
-                        refresh_token: refreshToken
-                    });
-                    
-                    if (sessionError) {
-                        console.error('Session error:', sessionError);
+                supabaseClient.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken
+                }).then(function(result) {
+                    if (result.error) {
+                        console.error('Session error:', result.error);
                         document.getElementById('resetForm').classList.add('hidden');
                         document.getElementById('errorState').classList.remove('hidden');
-                        return;
                     }
-                    
-                    // Show the form
-                    document.getElementById('resetForm').classList.remove('hidden');
-                } catch (err) {
-                    console.error('Init error:', err);
-                    document.getElementById('resetForm').classList.add('hidden');
-                    document.getElementById('errorState').classList.remove('hidden');
+                });
+            }
+
+            document.getElementById('submitBtn').addEventListener('click', function() {
+                var password = document.getElementById('password').value;
+                var confirmPassword = document.getElementById('confirmPassword').value;
+                var messageDiv = document.getElementById('message');
+                var submitBtn = document.getElementById('submitBtn');
+                
+                messageDiv.innerHTML = '';
+                
+                if (password.length < 6) {
+                    messageDiv.innerHTML = '<div class="message error">Password must be at least 6 characters</div>';
+                    return;
                 }
-            }
-        }
-
-        async function resetPassword() {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const messageDiv = document.getElementById('message');
-            const submitBtn = document.getElementById('submitBtn');
-            const btnText = document.getElementById('btnText');
-            const btnLoading = document.getElementById('btnLoading');
-            
-            // Clear previous messages
-            messageDiv.innerHTML = '';
-            
-            // Validation
-            if (password.length < 6) {
-                messageDiv.innerHTML = '<div class="message error">Password must be at least 6 characters</div>';
-                return;
-            }
-            
-            if (password !== confirmPassword) {
-                messageDiv.innerHTML = '<div class="message error">Passwords do not match</div>';
-                return;
-            }
-
-            // Show loading state
-            submitBtn.disabled = true;
-            btnText.classList.add('hidden');
-            btnLoading.classList.remove('hidden');
-
-            try {
-                const { error } = await supabase.auth.updateUser({ password });
                 
-                if (error) throw error;
-                
-                // Show success state
-                document.getElementById('resetForm').classList.add('hidden');
-                document.getElementById('successState').classList.remove('hidden');
-                
-                // Clear the URL hash
-                window.history.replaceState(null, '', window.location.pathname);
-                
-            } catch (error) {
-                console.error('Reset error:', error);
-                messageDiv.innerHTML = '<div class="message error">' + (error.message || 'Failed to reset password. Please try again.') + '</div>';
-                submitBtn.disabled = false;
-                btnText.classList.remove('hidden');
-                btnLoading.classList.add('hidden');
-            }
-        }
+                if (password !== confirmPassword) {
+                    messageDiv.innerHTML = '<div class="message error">Passwords do not match</div>';
+                    return;
+                }
 
-        // Initialize on page load
-        init();
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Updating...';
+
+                supabaseClient.auth.updateUser({ password: password }).then(function(result) {
+                    if (result.error) {
+                        console.error('Update error:', result.error);
+                        messageDiv.innerHTML = '<div class="message error">' + result.error.message + '</div>';
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Update Password';
+                    } else {
+                        document.getElementById('resetForm').classList.add('hidden');
+                        document.getElementById('successState').classList.remove('hidden');
+                        window.history.replaceState(null, '', window.location.pathname);
+                    }
+                }).catch(function(err) {
+                    console.error('Catch error:', err);
+                    messageDiv.innerHTML = '<div class="message error">Failed to reset password. Please try again.</div>';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Update Password';
+                });
+            });
+        })();
     </script>
 </body>
 </html>
